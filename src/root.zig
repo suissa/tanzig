@@ -35,6 +35,9 @@ pub const client = @import("runtime/client.zig");
 pub const server = @import("runtime/server.zig");
 pub const util = @import("util.zig");
 pub const mdzx = @import("runtime/mdzx.zig");
+pub const mcp = @import("mcp.zig");
+
+// --- Reactivity --- //
 pub const EventHandler = @import("runtime/core/Event/Handler.zig");
 pub const ActionHandle = @import("runtime/core/Event/ActionHandle.zig");
 pub const State = reactivity.State;
@@ -90,5 +93,4 @@ pub const std_options = opts.std_options;
 pub const style = @import("style/root.zig");
 pub const Style = style.Style;
 
-// TanStack AI-compatible AI module.
-pub const ai = @import("ai.zig");
+// Temp Design
