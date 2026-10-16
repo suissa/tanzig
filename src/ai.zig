@@ -8,6 +8,14 @@ pub const chat = @import("ai/chat.zig");
 pub const openai = @import("ai/openai.zig");
 pub const websocket = @import("ai/websocket.zig");
 pub const webchat = @import("ai/webchat.zig");
+pub const utils = @import("ai/utils.zig");
+
+pub const Tool = utils.Tool;
+pub const ToolRunOptions = utils.RunOptions;
+pub const ToolTrimOptions = utils.TrimOptions;
+pub const tool = utils.tool;
+pub const autoTrimTools = utils.autoTrimTools;
+pub const validateToolArguments = utils.validateToolArguments;
 
 pub const Message = types.Message;
 pub const Role = types.Role;
