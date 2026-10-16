@@ -49,18 +49,26 @@ pub const ChatError = error{
 
 pub fn validate(request: ChatRequest) ChatError!void {
     if (request.messages.len == 0 or request.messages.len > 100) return error.InvalidRequest;
-
     for (request.messages) |message| {
         if (message.content.len == 0) return error.EmptyMessage;
         if (message.content.len > 32 * 1024) return error.MessageTooLong;
     }
 }
 
-pub fn deinitMessages(allocator: std.mem.Allocator, messages: []Message) void {
-    for (messages) |message| allocator.free(message.content);
-    allocator.free(messages);
-}
-
 pub fn nowMs() i64 {
     return std.time.milliTimestamp();
+}
+
+test "chat request validation accepts a normal conversation" {
+    const messages = [_]Message{ .{ .role = .user, .content = "Hello" } };
+    try validate(.{ .messages = &messages });
+}
+
+test "chat request validation rejects empty conversations" {
+    try std.testing.expectError(error.InvalidRequest, validate(.{ .messages = &.{} }));
+}
+
+test "chat request validation rejects empty message content" {
+    const messages = [_]Message{ .{ .role = .user, .content = "" } };
+    try std.testing.expectError(error.EmptyMessage, validate(.{ .messages = &messages }));
 }
