@@ -1,25 +1,29 @@
 const std = @import("std");
 const types = @import("types.zig");
 
-pub const ChatOptions = struct {
-    adapter: anytype,
-    messages: []const types.Message,
-    thread_id: ?[]const u8 = null,
-    run_id: ?[]const u8 = null,
-};
+pub fn ChatOptions(comptime Adapter: type) type {
+    return struct {
+        adapter: Adapter,
+        messages: []const types.Message,
+        thread_id: ?[]const u8 = null,
+        run_id: ?[]const u8 = null,
+        model: ?[]const u8 = null,
+        temperature: ?f32 = null,
+        max_output_tokens: ?u32 = null,
+    };
+}
 
 /// TanStack AI-compatible chat primitive.
-///
-/// The adapter is provider-specific (for example openaiText()) while this
-/// function owns validation and the framework-neutral streaming lifecycle.
+/// The adapter is provider-specific while this function owns validation and
+/// the framework-neutral streaming lifecycle.
 pub fn chat(options: anytype, allocator: std.mem.Allocator, emit: *const fn (types.StreamChunk, ?[]const u8) anyerror!void) !void {
     const request = types.ChatRequest{
         .messages = options.messages,
         .thread_id = options.thread_id,
         .run_id = options.run_id,
-        .model = if (@hasField(@TypeOf(options), "model")) options.model else null,
-        .temperature = if (@hasField(@TypeOf(options), "temperature")) options.temperature else null,
-        .max_output_tokens = if (@hasField(@TypeOf(options), "max_output_tokens")) options.max_output_tokens else null,
+        .model = options.model,
+        .temperature = options.temperature,
+        .max_output_tokens = options.max_output_tokens,
     };
     types.validate(request) catch |err| {
         try emit(.{ .type = .RUN_ERROR, .timestamp = types.nowMs(), .threadId = request.thread_id, .runId = request.run_id, .message = @errorName(err) }, null);
