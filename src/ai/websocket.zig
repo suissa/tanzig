@@ -3,10 +3,12 @@ const zx = @import("../root.zig");
 const types = @import("types.zig");
 const chat_mod = @import("chat.zig");
 
-pub const WebSocketConfig = struct {
-    adapter: anytype,
-    max_message_bytes: usize = 32 * 1024,
-};
+pub fn WebSocketConfig(comptime Adapter: type) type {
+    return struct {
+        adapter: Adapter,
+        max_message_bytes: usize = 32 * 1024,
+    };
+}
 
 const WireMessage = struct {
     role: types.Role = .user,
@@ -24,7 +26,6 @@ const WireRequest = struct {
 };
 
 /// Handle one TanStack AI-style WebSocket frame.
-///
 /// The browser keeps one socket open and sends one RunAgentInput-like JSON
 /// frame per turn. Each generated StreamChunk is written back as JSON.
 pub fn handle(config: anytype, socket: zx.Socket, raw_message: []const u8, allocator: std.mem.Allocator) !void {
@@ -93,31 +94,27 @@ pub fn handle(config: anytype, socket: zx.Socket, raw_message: []const u8, alloc
     };
 
     var emitter = Emitter{ .socket = socket, .allocator = allocator };
-    try chat_mod.chat(.{ .adapter = config.adapter, .messages = messages.items, .thread_id = request.thread_id, .run_id = request.run_id, .model = request.model, .temperature = request.temperature, .max_output_tokens = request.max_output_tokens }, allocator, Emitter.emit);
+    try chat_mod.chat(.{
+        .adapter = config.adapter,
+        .messages = messages.items,
+        .thread_id = request.thread_id,
+        .run_id = request.run_id,
+        .model = request.model,
+        .temperature = request.temperature,
+        .max_output_tokens = request.max_output_tokens,
+    }, allocator, Emitter.emit);
 }
 
 fn sendError(socket: zx.Socket, allocator: std.mem.Allocator, code: []const u8, message: []const u8) !void {
+    const ErrorPayload = struct { code: []const u8, message: []const u8 };
     const Chunk = struct {
         type: types.StreamType = .RUN_ERROR,
         timestamp: i64,
         message: []const u8,
-        error: struct { code: []const u8, message: []const u8 },
+        error: ErrorPayload,
     };
     var payload = std.ArrayList(u8).empty;
     defer payload.deinit(allocator);
     try std.json.stringify(Chunk{ .timestamp = types.nowMs(), .message = message, .error = .{ .code = code, .message = message } }, .{}, payload.writer(allocator));
     try socket.write(payload.items);
-}
-
-/// Adapt the framework's generated ServerApp.SocketHandler signature.
-pub fn handler(config: anytype) zx.server.App.SocketHandler {
-    const Wrapper = struct {
-        var cfg: @TypeOf(config) = config;
-
-        fn run(socket: zx.Socket, message: []const u8, message_type: zx.SocketMessageType, _: ?[]const u8, allocator: std.mem.Allocator, _: std.mem.Allocator, _: std.Io) anyerror!void {
-            if (message_type != .text) return error.InvalidRequest;
-            return handle(cfg, socket, message, allocator);
-        }
-    };
-    return Wrapper.run;
 }
