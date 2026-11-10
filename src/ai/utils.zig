@@ -162,7 +162,13 @@ pub fn executeToolCalls(
     options: RunOptions,
 ) ![]ToolResult {
     const results = try allocator.alloc(ToolResult, calls.len);
-    errdefer allocator.free(results);
+    var initialized: usize = 0;
+    errdefer {
+        for (results[0..initialized]) |result| {
+            if (result.failed) allocator.free(@constCast(result.output));
+        }
+        allocator.free(results);
+    }
 
     for (calls, 0..) |call, i| {
         const selected = findTool(registered_tools, call.name) orelse {
@@ -202,6 +208,7 @@ pub fn executeToolCalls(
             .output = output,
             .failed = false,
         };
+        initialized += 1;
     }
     return results;
 }
