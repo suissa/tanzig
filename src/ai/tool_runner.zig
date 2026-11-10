@@ -41,7 +41,7 @@ pub fn runWithTools(
     invoker: ModelInvoker,
     options: utils.RunOptions,
 ) !RunResult {
-    var previous_results: []utils.ToolResult = &.{};
+    var previous_results: []utils.ToolResult = @constCast(&[_]utils.ToolResult{});
     var owned_results = false;
     defer {
         if (owned_results) {
@@ -66,7 +66,7 @@ pub fn runWithTools(
                 if (result.failed) allocator.free(@constCast(result.output));
             }
             allocator.free(previous_results);
-            previous_results = &.{};
+            previous_results = @constCast(&[_]utils.ToolResult{});
             owned_results = false;
         }
 
@@ -104,7 +104,8 @@ test "runWithTools feeds tool results into the next model turn" {
     };
     const Echo = struct {
         fn call(allocator: std.mem.Allocator, args: []const u8) anyerror![]u8 {
-            return allocator.dupe(u8, args);
+            _ = allocator;
+            return @constCast(args);
         }
     };
     var state = State{};
