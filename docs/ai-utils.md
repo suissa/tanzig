@@ -54,4 +54,4 @@ The OpenAI adapter currently streams text responses; it does not yet decode nati
 
 ## Tests
 
-Run `zig test src/ai/utils.zig` and `zig test src/ai/tool_runner.zig` with the repository's Zig 0.17 toolchain. Successful tool callback output is borrowed by the result; the callback defines its lifetime. Error result payloads are allocated by the supplied allocator and freed by the runner after the next invocation has consumed them.
+Run `zig test src/ai/utils.zig` and `zig test src/ai/tool_runner.zig` with the repository's Zig 0.17 toolchain. Successful tool callback output is borrowed by the result; the callback must keep it alive while the model invoker consumes it and is responsible for releasing any allocation it created. Error result payloads are allocated by the supplied allocator and freed by the runner after the next invocation has consumed them.
