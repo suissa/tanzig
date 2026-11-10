@@ -30,6 +30,15 @@ pub const ParsedToolResponse = struct {
     }
 };
 
+fn duplicateCall(allocator: std.mem.Allocator, builder: CallBuilder) !utils.ToolCall {
+    const id = try allocator.dupe(u8, builder.id.items);
+    errdefer allocator.free(id);
+    const name = try allocator.dupe(u8, builder.name.items);
+    errdefer allocator.free(name);
+    const arguments_json = try allocator.dupe(u8, builder.arguments.items);
+    return .{ .id = id, .name = name, .arguments_json = arguments_json };
+}
+
 /// Decode a complete Chat Completions SSE body into accumulated assistant text
 /// and function calls. The returned strings are owned by ParsedToolResponse.
 /// This parser intentionally handles the Chat Completions delta protocol only.
@@ -102,11 +111,7 @@ pub fn parseChatCompletionsSse(
         }
     }
     for (builders.items, 0..) |builder, i| {
-        calls[i] = .{
-            .id = try allocator.dupe(u8, builder.id.items),
-            .name = try allocator.dupe(u8, builder.name.items),
-            .arguments_json = try allocator.dupe(u8, builder.arguments.items),
-        };
+        calls[i] = try duplicateCall(allocator, builder);
         initialized += 1;
     }
 
