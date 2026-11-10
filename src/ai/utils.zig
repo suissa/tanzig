@@ -133,3 +133,132 @@ test "auto trim favors relevant tool descriptions" {
     defer std.testing.allocator.free(selected);
     try std.testing.expectEqualStrings("get-weather", selected[0].name);
 }
+
+/// One function call requested by a model. String fields are borrowed for the
+/// duration of executeToolCalls and may point into the provider response.
+pub const ToolCall = struct {
+    id: []const u8,
+    name: []const u8,
+    arguments_json: []const u8,
+};
+
+/// Result for one call. output is borrowed from the tool callback on success;
+/// on dispatch/validation failure it is allocated from the supplied allocator.
+pub const ToolResult = struct {
+    id: []const u8,
+    name: []const u8,
+    output: []const u8,
+    failed: bool = false,
+};
+
+/// Execute a complete model tool-call batch in order. Unknown tools and strict
+/// argument-validation failures become per-call error results, so one bad call
+/// does not prevent independent calls in the same batch from running.
+/// Successful callbacks own the lifetime policy of their returned byte slice.
+pub fn executeToolCalls(
+    allocator: std.mem.Allocator,
+    registered_tools: []const Tool,
+    calls: []const ToolCall,
+    options: RunOptions,
+) ![]ToolResult {
+    const results = try allocator.alloc(ToolResult, calls.len);
+    errdefer allocator.free(results);
+
+    for (calls, 0..) |call, i| {
+        const selected = findTool(registered_tools, call.name) orelse {
+            results[i] = .{
+                .id = call.id,
+                .name = call.name,
+                .output = try allocator.dupe(u8, "{\"error\":\"UnknownTool\"}"),
+                .failed = true,
+            };
+            continue;
+        };
+
+        if (options.strict_validation) {
+            validateToolArguments(allocator, call.arguments_json) catch {
+                results[i] = .{
+                    .id = call.id,
+                    .name = call.name,
+                    .output = try allocator.dupe(u8, "{\"error\":\"InvalidToolArguments\"}"),
+                    .failed = true,
+                };
+                continue;
+            };
+        }
+
+        const output = selected.function(allocator, call.arguments_json) catch |err| {
+            results[i] = .{
+                .id = call.id,
+                .name = call.name,
+                .output = try std.fmt.allocPrint(allocator, "{{\"error\":\"ToolExecutionFailed\",\"reason\":\"{s}\"}}", .{@errorName(err)}),
+                .failed = true,
+            };
+            continue;
+        };
+        results[i] = .{
+            .id = call.id,
+            .name = call.name,
+            .output = output,
+            .failed = false,
+        };
+    }
+    return results;
+}
+
+fn findTool(tools: []const Tool, name: []const u8) ?Tool {
+    for (tools) |item| {
+        if (std.mem.eql(u8, item.name, name)) return item;
+    }
+    return null;
+}
+
+test "executeToolCalls runs multiple calls and preserves call ids" {
+    const callbacks = struct {
+        fn echo(_: std.mem.Allocator, args: []const u8) anyerror![]u8 {
+            return args;
+        }
+    };
+    const registered = [_]Tool{
+        .{ .name = "echo", .description = "Echo arguments", .parameters_json = "{\"type\":\"object\"}", .function = callbacks.echo },
+    };
+    const calls = [_]ToolCall{
+        .{ .id = "call-1", .name = "echo", .arguments_json = "{\"value\":1}" },
+        .{ .id = "call-2", .name = "missing", .arguments_json = "{}" },
+    };
+    const results = try executeToolCalls(std.testing.allocator, &registered, &calls, .{});
+    defer {
+        for (results) |result| {
+            if (result.failed) std.testing.allocator.free(@constCast(result.output));
+        }
+        std.testing.allocator.free(results);
+    }
+    try std.testing.expectEqualStrings("call-1", results[0].id);
+    try std.testing.expectEqualStrings("{\"value\":1}", results[0].output);
+    try std.testing.expect(!results[0].failed);
+    try std.testing.expect(results[1].failed);
+    try std.testing.expectEqualStrings("{\"error\":\"UnknownTool\"}", results[1].output);
+}
+
+test "executeToolCalls rejects malformed arguments in strict mode" {
+    const callbacks = struct {
+        fn noop(_: std.mem.Allocator, _: []const u8) anyerror![]u8 {
+            return "{}";
+        }
+    };
+    const registered = [_]Tool{
+        .{ .name = "noop", .description = "No operation", .parameters_json = "{}", .function = callbacks.noop },
+    };
+    const calls = [_]ToolCall{
+        .{ .id = "call-1", .name = "noop", .arguments_json = "[]" },
+    };
+    const results = try executeToolCalls(std.testing.allocator, &registered, &calls, .{ .strict_validation = true });
+    defer {
+        for (results) |result| {
+            if (result.failed) std.testing.allocator.free(@constCast(result.output));
+        }
+        std.testing.allocator.free(results);
+    }
+    try std.testing.expect(results[0].failed);
+    try std.testing.expectEqualStrings("{\"error\":\"InvalidToolArguments\"}", results[0].output);
+}
