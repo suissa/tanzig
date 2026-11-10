@@ -13,6 +13,7 @@ on:
       - 'vendor/**'
       - 'build.zig'
       - 'build.zig.zon'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
     paths:
@@ -25,6 +26,7 @@ on:
       - 'vendor/**'
       - 'build.zig'
       - 'build.zig.zon'
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 
@@ -80,3 +82,17 @@ jobs:
       run: zig build test
       env:
         E2E: 1
+
+  ai-utils-zig-016:
+    name: AI Utils (Zig 0.16.0)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Zig 0.16.0
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+          cache-size-limit: 0
+      - name: Test standalone AI utilities
+        run: zig test src/ai/utils.zig
