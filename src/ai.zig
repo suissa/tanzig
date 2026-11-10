@@ -11,11 +11,14 @@ pub const webchat = @import("ai/webchat.zig");
 pub const utils = @import("ai/utils.zig");
 
 pub const Tool = utils.Tool;
+pub const ToolCall = utils.ToolCall;
+pub const ToolResult = utils.ToolResult;
 pub const ToolRunOptions = utils.RunOptions;
 pub const ToolTrimOptions = utils.TrimOptions;
 pub const tool = utils.tool;
 pub const autoTrimTools = utils.autoTrimTools;
 pub const validateToolArguments = utils.validateToolArguments;
+pub const executeToolCalls = utils.executeToolCalls;
 
 pub const Message = types.Message;
 pub const Role = types.Role;
