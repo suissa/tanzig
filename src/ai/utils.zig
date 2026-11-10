@@ -225,8 +225,8 @@ fn findTool(tools: []const Tool, name: []const u8) ?Tool {
 
 test "executeToolCalls runs multiple calls and preserves call ids" {
     const callbacks = struct {
-        fn echo(_: std.mem.Allocator, args: []const u8) anyerror![]u8 {
-            return args;
+        fn echo(allocator: std.mem.Allocator, args: []const u8) anyerror![]u8 {
+            return allocator.dupe(u8, args);
         }
     };
     const registered = [_]Tool{
@@ -241,6 +241,7 @@ test "executeToolCalls runs multiple calls and preserves call ids" {
         for (results) |result| {
             if (result.failed) std.testing.allocator.free(@constCast(result.output));
         }
+        std.testing.allocator.free(@constCast(results[0].output));
         std.testing.allocator.free(results);
     }
     try std.testing.expectEqualStrings("call-1", results[0].id);
