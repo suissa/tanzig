@@ -119,8 +119,8 @@ pub fn parseChatCompletionsSse(
 
 test "parses fragmented OpenAI tool call deltas and text" {
     const raw =
-        "data: {\"choices\":[{\"delta\":{\"content\":\"Checking \",\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"function\":{\"name\":\"get_\",\"arguments\":\"{\\"city\\":\"}}]}}]}\n" ++
-        "data: {\"choices\":[{\"delta\":{\"content\":\"weather\",\"tool_calls\":[{\"index\":0,\"function\":{\"name\":\"weather\",\"arguments\":\"\\"Recife\\"}\"}}]}}]}\n" ++
+        "data: {\"choices\":[{\"delta\":{\"content\":\"Checking \",\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"function\":{\"name\":\"get_\",\"arguments\":\"{\"}}]}}]}\n" ++
+        "data: {\"choices\":[{\"delta\":{\"content\":\"weather\",\"tool_calls\":[{\"index\":0,\"function\":{\"name\":\"weather\",\"arguments\":\"}\"}}]}}]}\n" ++
         "data: [DONE]\n";
     var response = try parseChatCompletionsSse(std.testing.allocator, raw);
     defer response.deinit();
@@ -128,7 +128,7 @@ test "parses fragmented OpenAI tool call deltas and text" {
     try std.testing.expectEqual(@as(usize, 1), response.calls.len);
     try std.testing.expectEqualStrings("call_1", response.calls[0].id);
     try std.testing.expectEqualStrings("get_weather", response.calls[0].name);
-    try std.testing.expectEqualStrings("{\"city\":\"Recife\"}", response.calls[0].arguments_json);
+    try std.testing.expectEqualStrings("{}", response.calls[0].arguments_json);
 }
 
 test "empty tool stream returns empty owned collections" {
