@@ -35,7 +35,8 @@ const weather = ai.tool(.{
 
 - `tool(definition)`: typed, allocation-free tool declaration helper.
 - `autoTrimTools(allocator, tools, prompt, options)`: deterministic lexical relevance selection; returns an allocated slice that the caller must free.
-- `validateToolArguments(allocator, json)`: parses JSON and requires the top-level value to be an object.\n- `executeToolCalls(allocator, registered_tools, calls, options)`: executes a complete batch in order, preserves call IDs, and returns one result per call. Unknown tools, strict argument failures, and callback errors become individual error results rather than aborting the batch.
+- `validateToolArguments(allocator, json)`: parses JSON and requires the top-level value to be an object.
+- `executeToolCalls(allocator, registered_tools, calls, options)`: executes a complete batch in order, preserves call IDs, and returns one result per call. Unknown tools, strict argument failures, and callback errors become individual error results rather than aborting the batch.
 - `RunOptions`: exposes the configuration shape for strict validation, recursive tool-run limits, final streaming, and verbose diagnostics.
 
 ## Compatibility notes
