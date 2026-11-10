@@ -21,13 +21,13 @@ A tool declares a stable name, description, JSON parameter schema, and an execut
 fn getWeather(allocator: std.mem.Allocator, arguments_json: []const u8) ![]u8 {
     _ = allocator;
     _ = arguments_json;
-    return "{\\"condition\\":\\"sunny\\"}";
+    return "{\"condition\":\"sunny\"}";
 }
 
 const weather = ai.tool(.{
     .name = "get-weather",
     .description = "Gets current weather for a city",
-    .parameters_json = "{\\"type\\":\\"object\\",\\"properties\\":{\\"city\\":{\\"type\\":\\"string\\"}},\\"required\\":[\\"city\\"]}",
+    .parameters_json = "{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}",
     .function = getWeather,
 });
 ```
