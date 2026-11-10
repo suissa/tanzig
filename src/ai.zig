@@ -10,6 +10,7 @@ pub const websocket = @import("ai/websocket.zig");
 pub const webchat = @import("ai/webchat.zig");
 pub const utils = @import("ai/utils.zig");
 pub const tool_runner = @import("ai/tool_runner.zig");
+pub const openai_tools = @import("ai/openai_tools.zig");
 
 pub const Tool = utils.Tool;
 pub const ToolCall = utils.ToolCall;
