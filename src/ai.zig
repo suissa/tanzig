@@ -9,16 +9,21 @@ pub const openai = @import("ai/openai.zig");
 pub const websocket = @import("ai/websocket.zig");
 pub const webchat = @import("ai/webchat.zig");
 pub const utils = @import("ai/utils.zig");
+pub const tool_runner = @import("ai/tool_runner.zig");
 
 pub const Tool = utils.Tool;
 pub const ToolCall = utils.ToolCall;
 pub const ToolResult = utils.ToolResult;
 pub const ToolRunOptions = utils.RunOptions;
 pub const ToolTrimOptions = utils.TrimOptions;
+pub const ModelReply = tool_runner.ModelReply;
+pub const ModelInvoker = tool_runner.ModelInvoker;
+pub const ToolRunResult = tool_runner.RunResult;
 pub const tool = utils.tool;
 pub const autoTrimTools = utils.autoTrimTools;
 pub const validateToolArguments = utils.validateToolArguments;
 pub const executeToolCalls = utils.executeToolCalls;
+pub const runWithTools = tool_runner.runWithTools;
 
 pub const Message = types.Message;
 pub const Role = types.Role;
