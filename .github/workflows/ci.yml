@@ -71,6 +71,7 @@ jobs:
           zig build test
           zig test src/ai/utils.zig
           zig test src/ai/tool_runner.zig
+          zig test src/ai/openai_tools.zig
         env:
           E2E: 1
 
