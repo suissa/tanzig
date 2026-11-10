@@ -50,7 +50,7 @@ The invoker receives the registered tools and the previous tool-result batch. It
 
 This is a native Zig compatibility layer, not a binary-compatible port of the TypeScript package. `autoTrimTools` currently uses deterministic lexical relevance rather than an additional model call. Argument validation currently checks JSON syntax and the top-level object shape; it does not yet implement complete JSON Schema validation.
 
-The OpenAI adapter currently streams text responses; it does not yet decode native provider tool-call events into `ModelReply`. Applications can implement `ModelInvoker` against a provider that exposes tool calls. OpenAPI JSON/YAML conversion and HTTP request overrides are also not implemented yet. The module deliberately does not claim Workers-only embedded function calling works over arbitrary REST APIs.
+The OpenAI Chat Completions SSE decoder now reconstructs fragmented function-call IDs, names, arguments, and interleaved assistant text through `openai_tools.parseChatCompletionsSse`. The parser returns owned strings and a `ParsedToolResponse` that must be deinitialized. It is a decoding primitive, not yet an end-to-end OpenAI `ModelInvoker`: conversation-history serialization and automatic recursive invocation are still the application's responsibility. OpenAPI JSON/YAML conversion and HTTP request overrides are also not implemented yet. The module deliberately does not claim Workers-only embedded function calling works over arbitrary REST APIs.
 
 ## Tests
 
