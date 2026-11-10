@@ -178,6 +178,7 @@ pub fn executeToolCalls(
                 .output = try allocator.dupe(u8, "{\"error\":\"UnknownTool\"}"),
                 .failed = true,
             };
+            initialized = i + 1;
             continue;
         };
 
@@ -189,6 +190,7 @@ pub fn executeToolCalls(
                     .output = try allocator.dupe(u8, "{\"error\":\"InvalidToolArguments\"}"),
                     .failed = true,
                 };
+                initialized = i + 1;
                 continue;
             };
         }
@@ -200,6 +202,7 @@ pub fn executeToolCalls(
                 .output = try std.fmt.allocPrint(allocator, "{{\"error\":\"ToolExecutionFailed\",\"reason\":\"{s}\"}}", .{@errorName(err)}),
                 .failed = true,
             };
+            initialized = i + 1;
             continue;
         };
         results[i] = .{
